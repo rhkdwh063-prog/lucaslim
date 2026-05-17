@@ -1,14 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+  <title>원단 샘플 검색</title>
+  <link href="/style.css" rel="stylesheet">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
+  <main class="search-page" aria-label="원단 샘플 검색">
+    <form class="search-form" id="sample-search-form" role="search">
+      <label class="visually-hidden" for="sample-search">원단 샘플명 검색</label>
+      <input
+        id="sample-search"
+        name="q"
+        type="search"
+        autocomplete="off"
+        placeholder="원단 샘플명을 검색하세요"
+        aria-label="원단 샘플명 검색"
+      >
+      <button type="submit" aria-label="검색">검색</button>
+    </form>
+  </main>
   <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>
