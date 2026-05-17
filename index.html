@@ -8,19 +8,30 @@
 </head>
 <body>
   <main class="search-page" aria-label="원단 샘플 검색">
-    <form class="search-form" id="sample-search-form" role="search">
-      <label class="visually-hidden" for="sample-search">원단 샘플명 검색</label>
-      <input
-        id="sample-search"
-        name="q"
-        type="search"
-        autocomplete="off"
-        placeholder="원단 샘플명을 검색하세요"
-        aria-label="원단 샘플명 검색"
-      >
-      <button type="submit" aria-label="검색">검색</button>
-    </form>
+    <section class="search-panel">
+      <div class="upload-bar">
+        <label class="upload-button" for="sample-file">엑셀 업로드</label>
+        <input id="sample-file" type="file" accept=".xlsx,.xls,.csv">
+        <p id="data-status" aria-live="polite">테스트 원단 5개가 준비되었습니다.</p>
+      </div>
+
+      <form class="search-form" id="sample-search-form" role="search">
+        <label class="visually-hidden" for="sample-search">원단 샘플명 검색</label>
+        <input
+          id="sample-search"
+          name="q"
+          type="search"
+          autocomplete="off"
+          placeholder="원단 샘플명을 검색하세요"
+          aria-label="원단 샘플명 검색"
+        >
+        <button type="submit" aria-label="검색">검색</button>
+      </form>
+
+      <section class="results" id="results" aria-live="polite"></section>
+    </section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script defer type="text/javascript" src="/main.js"></script>
 </body>
 </html>
