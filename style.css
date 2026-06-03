@@ -21,6 +21,10 @@ select {
   font: inherit;
 }
 
+a {
+  text-decoration: none;
+}
+
 .search-page {
   display: grid;
   min-height: 100vh;
