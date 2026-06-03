@@ -205,6 +205,114 @@ function normalizeSample(row) {
   };
 }
 
+const SEARCH_FIELDS = [
+  { key: "code", weight: 1.2 },
+  { key: "sampleName", weight: 1.25 },
+  { key: "material", weight: 1 },
+  { key: "weave", weight: 1 },
+  { key: "color", weight: 0.95 },
+  { key: "functionality", weight: 1 },
+  { key: "usage", weight: 0.9 },
+];
+
+function createBigrams(value) {
+  const characters = Array.from(value);
+
+  if (characters.length < 2) {
+    return characters;
+  }
+
+  return characters.slice(0, -1).map((character, index) => `${character}${characters[index + 1]}`);
+}
+
+function diceSimilarity(left, right) {
+  if (!left || !right) {
+    return 0;
+  }
+
+  if (left === right) {
+    return 1;
+  }
+
+  const leftBigrams = createBigrams(left);
+  const rightBigrams = createBigrams(right);
+  const remaining = new Map();
+  let matches = 0;
+
+  leftBigrams.forEach((bigram) => {
+    remaining.set(bigram, (remaining.get(bigram) || 0) + 1);
+  });
+
+  rightBigrams.forEach((bigram) => {
+    const count = remaining.get(bigram) || 0;
+
+    if (count > 0) {
+      matches += 1;
+      remaining.set(bigram, count - 1);
+    }
+  });
+
+  return (2 * matches) / (leftBigrams.length + rightBigrams.length);
+}
+
+function levenshteinSimilarity(left, right) {
+  const leftCharacters = Array.from(left);
+  const rightCharacters = Array.from(right);
+  const maxLength = Math.max(leftCharacters.length, rightCharacters.length);
+
+  if (maxLength === 0) {
+    return 1;
+  }
+
+  const distances = Array.from({ length: leftCharacters.length + 1 }, (_, leftIndex) =>
+    Array.from({ length: rightCharacters.length + 1 }, (_, rightIndex) =>
+      leftIndex === 0 ? rightIndex : rightIndex === 0 ? leftIndex : 0
+    )
+  );
+
+  for (let leftIndex = 1; leftIndex <= leftCharacters.length; leftIndex += 1) {
+    for (let rightIndex = 1; rightIndex <= rightCharacters.length; rightIndex += 1) {
+      const cost = leftCharacters[leftIndex - 1] === rightCharacters[rightIndex - 1] ? 0 : 1;
+      distances[leftIndex][rightIndex] = Math.min(
+        distances[leftIndex - 1][rightIndex] + 1,
+        distances[leftIndex][rightIndex - 1] + 1,
+        distances[leftIndex - 1][rightIndex - 1] + cost
+      );
+    }
+  }
+
+  return 1 - distances[leftCharacters.length][rightCharacters.length] / maxLength;
+}
+
+function scoreField(value, searchTerm) {
+  const fieldText = compactText(value);
+
+  if (!fieldText) {
+    return 0;
+  }
+
+  if (fieldText === searchTerm) {
+    return 1;
+  }
+
+  if (fieldText.includes(searchTerm)) {
+    return 0.8 + Math.min(searchTerm.length / fieldText.length, 1) * 0.18;
+  }
+
+  if (searchTerm.includes(fieldText)) {
+    return 0.55 + Math.min(fieldText.length / searchTerm.length, 1) * 0.2;
+  }
+
+  return Math.max(diceSimilarity(fieldText, searchTerm), levenshteinSimilarity(fieldText, searchTerm));
+}
+
+function rankSample(sample, searchTerm) {
+  return SEARCH_FIELDS.reduce((bestScore, field) => {
+    const fieldScore = scoreField(sample[field.key], searchTerm) * field.weight;
+    return Math.max(bestScore, fieldScore);
+  }, 0);
+}
+
 function searchSamples(sampleList, query) {
   const searchTerm = compactText(query);
 
@@ -212,21 +320,13 @@ function searchSamples(sampleList, query) {
     return sampleList;
   }
 
-  return sampleList.filter((sample) => {
-    const haystack = [
-      sample.sampleName,
-      sample.code,
-      sample.color,
-      sample.material,
-      sample.weave,
-      sample.functionality,
-      sample.usage,
-    ]
-      .map(compactText)
-      .join(" ");
+  const minimumScore = searchTerm.length <= 2 ? 0.62 : 0.42;
 
-    return haystack.includes(searchTerm);
-  });
+  return sampleList
+    .map((sample, index) => ({ index, sample, score: rankSample(sample, searchTerm) }))
+    .filter((result) => result.score >= minimumScore)
+    .sort((left, right) => right.score - left.score || left.index - right.index)
+    .map((result) => result.sample);
 }
 
 function valueOrDash(value) {
