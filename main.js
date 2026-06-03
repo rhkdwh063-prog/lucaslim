@@ -220,7 +220,7 @@ function searchSamples(sampleList, query) {
       sample.material,
       sample.weave,
       sample.functionality,
-      sample.location,
+      sample.usage,
     ]
       .map(compactText)
       .join(" ");
