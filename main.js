@@ -440,11 +440,11 @@ async function initializeSamples() {
   try {
     samples = await loadSamplesFromServer();
     serverAvailable = true;
-    status.textContent = `서버 DB에서 ${samples.length}개 원단 데이터를 불러왔습니다.`;
+    status.textContent = `D1 DB에서 ${samples.length}개 원단 데이터를 불러왔습니다.`;
   } catch {
     samples = [...DEFAULT_SAMPLES];
     serverAvailable = false;
-    status.textContent = "서버 DB에 연결하지 못해 테스트 원단을 표시합니다.";
+    status.textContent = "D1 DB에 연결하지 못해 테스트 원단을 표시합니다.";
   }
 
   renderResults(samples);
@@ -615,13 +615,13 @@ function bindExcelUpload() {
     }
 
     if (!serverAvailable) {
-      status.textContent = "서버 DB에 연결되지 않아 업로드 데이터를 저장할 수 없습니다.";
+      status.textContent = "D1 DB에 연결되지 않아 업로드 데이터를 저장할 수 없습니다.";
       return;
     }
 
     try {
       samples = await saveSamplesToServer(uploadedSamples);
-      status.textContent = `${sheetName} 시트의 ${uploadedSamples.length}개 행을 서버 DB에 저장했습니다.`;
+      status.textContent = `${sheetName} 시트의 ${uploadedSamples.length}개 행을 D1 DB에 저장했습니다.`;
       renderResults(samples);
     } catch {
       status.textContent = "업로드 데이터 저장 중 오류가 발생했습니다.";
