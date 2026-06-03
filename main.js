@@ -214,6 +214,7 @@ const FIELD_ALIASES = {
 const FIELD_KEYS = Object.keys(FIELD_ALIASES);
 
 let samples = [...DEFAULT_SAMPLES];
+let currentResults = [...samples];
 
 function compactText(value) {
   return String(value ?? "")
@@ -426,6 +427,7 @@ function escapeHtml(value) {
 
 function renderResults(results, query = "") {
   const resultsContainer = document.querySelector("#results");
+  currentResults = results;
 
   if (!resultsContainer) {
     return;
@@ -453,6 +455,55 @@ function renderResults(results, query = "") {
       `
     )
     .join("");
+}
+
+function renderPrintLabels(labelSamples) {
+  const labelContainer = document.querySelector("#print-labels-area");
+
+  if (!labelContainer) {
+    return;
+  }
+
+  labelContainer.innerHTML = labelSamples
+    .map(
+      (sample) => `
+        <article class="print-label">
+          <header class="print-label__header">
+            <div class="print-label__code">${escapeHtml(sample.code)}</div>
+            <div class="print-label__location">${escapeHtml(sample.location)}</div>
+          </header>
+          <div class="print-label__name">${escapeHtml(sample.sampleName || "원단 샘플")}</div>
+          <dl class="print-label__grid">
+            <dt class="print-label__term">소재</dt><dd class="print-label__desc">${escapeHtml(sample.material)}</dd>
+            <dt class="print-label__term">혼용</dt><dd class="print-label__desc">${escapeHtml(sample.blendRatio)}</dd>
+            <dt class="print-label__term">조직</dt><dd class="print-label__desc">${escapeHtml(sample.weave)}</dd>
+            <dt class="print-label__term">중량</dt><dd class="print-label__desc">${escapeHtml(sample.weight)}</dd>
+            <dt class="print-label__term">밀도</dt><dd class="print-label__desc">${escapeHtml(sample.density)}</dd>
+            <dt class="print-label__term">원사</dt><dd class="print-label__desc">${escapeHtml(sample.yarn)}</dd>
+            <dt class="print-label__term">컬러</dt><dd class="print-label__desc">${escapeHtml(sample.color)}</dd>
+            <dt class="print-label__term">가공</dt><dd class="print-label__desc">${escapeHtml(sample.finish)}</dd>
+            <dt class="print-label__term">기능</dt><dd class="print-label__desc print-label__desc--wide">${escapeHtml(sample.functionality)}</dd>
+            <dt class="print-label__term">용도</dt><dd class="print-label__desc print-label__desc--wide">${escapeHtml(sample.usage)}</dd>
+          </dl>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function bindPrintLabels() {
+  const printButton = document.querySelector("#print-labels");
+  const status = document.querySelector("#data-status");
+
+  printButton?.addEventListener("click", () => {
+    if (currentResults.length === 0) {
+      status.textContent = "인쇄할 원단 데이터가 없습니다.";
+      return;
+    }
+
+    renderPrintLabels(currentResults);
+    window.print();
+  });
 }
 
 function bindSearch() {
@@ -509,6 +560,7 @@ function bindExcelUpload() {
 if (typeof document !== "undefined") {
   bindSearch();
   bindExcelUpload();
+  bindPrintLabels();
   renderResults(samples);
 }
 
@@ -519,6 +571,7 @@ if (typeof module !== "undefined") {
     SEARCH_FIELDS,
     normalizeSample,
     normalizeUploadedRows,
+    renderPrintLabels,
     searchSamples,
   };
 }

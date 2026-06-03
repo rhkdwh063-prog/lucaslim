@@ -10,6 +10,7 @@
   <main class="search-page" aria-label="원단 샘플 검색">
     <section class="search-panel">
       <div class="upload-bar">
+        <button class="upload-button" id="print-labels" type="button">라벨 인쇄</button>
         <a class="upload-button" href="/fabric_sample_upload_template.xlsx" download>양식 다운로드</a>
         <label class="upload-button" for="sample-file">엑셀 업로드</label>
         <input id="sample-file" type="file" accept=".xlsx,.xls,.csv">
@@ -48,6 +49,7 @@
 
       <section class="results" id="results" aria-live="polite"></section>
     </section>
+    <section class="print-labels" id="print-labels-area" aria-hidden="true"></section>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script defer type="text/javascript" src="/main.js"></script>
