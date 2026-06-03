@@ -440,9 +440,15 @@ function renderResults(results, query = "") {
 
   resultsContainer.innerHTML = results
     .map(
-      (sample) => `
+      (sample, index) => `
         <article class="result-card">
-          <h2>${escapeHtml(sample.sampleName || sample.code || "원단 샘플")}</h2>
+          <div class="result-card__header">
+            <h2>${escapeHtml(sample.sampleName || sample.code || "원단 샘플")}</h2>
+            <label class="label-select">
+              <input type="checkbox" class="label-select__input" data-result-index="${index}">
+              <span>라벨 선택</span>
+            </label>
+          </div>
           <dl class="result-grid">
             <div><dt>품번</dt><dd>${escapeHtml(sample.code)}</dd></div>
             <div><dt>소재</dt><dd>${escapeHtml(sample.material)}</dd></div>
@@ -455,6 +461,12 @@ function renderResults(results, query = "") {
       `
     )
     .join("");
+}
+
+function getSelectedLabelSamples() {
+  return Array.from(document.querySelectorAll(".label-select__input:checked"))
+    .map((checkbox) => currentResults[Number(checkbox.dataset.resultIndex)])
+    .filter(Boolean);
 }
 
 function renderPrintLabels(labelSamples) {
@@ -496,12 +508,19 @@ function bindPrintLabels() {
   const status = document.querySelector("#data-status");
 
   printButton?.addEventListener("click", () => {
+    const selectedSamples = getSelectedLabelSamples();
+
     if (currentResults.length === 0) {
       status.textContent = "인쇄할 원단 데이터가 없습니다.";
       return;
     }
 
-    renderPrintLabels(currentResults);
+    if (selectedSamples.length === 0) {
+      status.textContent = "라벨로 인쇄할 원단을 선택하세요.";
+      return;
+    }
+
+    renderPrintLabels(selectedSamples);
     window.print();
   });
 }
@@ -570,6 +589,7 @@ if (typeof module !== "undefined") {
     FIELD_KEYS,
     SEARCH_FIELDS,
     normalizeSample,
+    getSelectedLabelSamples,
     normalizeUploadedRows,
     renderPrintLabels,
     searchSamples,
