@@ -1,0 +1,8 @@
+name = "lucaslim"
+compatibility_date = "2026-06-03"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lucaslim"
+database_id = "85b44210-4bbe-4f06-ab92-8dc8adb13aa3"
