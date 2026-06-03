@@ -154,9 +154,15 @@ button.upload-button:hover {
 .result-card {
   border: 1px solid #d7e0e3;
   border-radius: 8px;
-  padding: 18px;
+  padding: 14px 18px 18px;
   background: #ffffff;
   box-shadow: 0 8px 24px rgba(31, 41, 51, 0.06);
+}
+
+.result-card:has(.label-select__input:checked) {
+  border-color: #267c8d;
+  background: #f3fbfd;
+  box-shadow: 0 0 0 3px rgba(38, 124, 141, 0.16), 0 8px 24px rgba(31, 41, 51, 0.06);
 }
 
 .result-card__header {
@@ -164,7 +170,7 @@ button.upload-button:hover {
   align-items: start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin: 12px 0;
 }
 
 .result-card h2 {
@@ -178,16 +184,16 @@ button.upload-button:hover {
 
 .label-select {
   display: inline-flex;
-  flex: 0 0 auto;
-  min-height: 30px;
+  min-height: 38px;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
   border: 1px solid #c9d4d8;
   border-radius: 6px;
-  padding: 0 10px;
+  padding: 0 12px;
   color: #1f2933;
   background: #f8fbfc;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   user-select: none;
 }
@@ -198,10 +204,46 @@ button.upload-button:hover {
 }
 
 .label-select__input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: #267c8d;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.label-select__box {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 2px solid #8aa0aa;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.label-select__box::after {
+  width: 10px;
+  height: 6px;
+  border: solid #ffffff;
+  border-width: 0 0 2px 2px;
+  content: "";
+  opacity: 0;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.label-select__input:checked + .label-select__box {
+  border-color: #267c8d;
+  background: #267c8d;
+}
+
+.label-select__input:checked + .label-select__box::after {
+  opacity: 1;
+}
+
+.label-select:has(.label-select__input:checked) {
+  border-color: #267c8d;
+  color: #1f6b79;
+  background: #e8f6f8;
 }
 
 .result-grid {
@@ -288,7 +330,7 @@ button.upload-button:hover {
   }
 
   .label-select {
-    width: max-content;
+    width: 100%;
   }
 
   .result-grid {

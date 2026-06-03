@@ -442,12 +442,13 @@ function renderResults(results, query = "") {
     .map(
       (sample, index) => `
         <article class="result-card">
+          <label class="label-select">
+            <input type="checkbox" class="label-select__input" data-result-index="${index}">
+            <span class="label-select__box" aria-hidden="true"></span>
+            <span class="label-select__text">인쇄할 라벨 선택</span>
+          </label>
           <div class="result-card__header">
             <h2>${escapeHtml(sample.sampleName || sample.code || "원단 샘플")}</h2>
-            <label class="label-select">
-              <input type="checkbox" class="label-select__input" data-result-index="${index}">
-              <span>라벨 선택</span>
-            </label>
           </div>
           <dl class="result-grid">
             <div><dt>품번</dt><dd>${escapeHtml(sample.code)}</dd></div>
