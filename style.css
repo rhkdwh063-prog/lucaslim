@@ -16,7 +16,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -84,6 +85,18 @@ input {
 .search-form:focus-within {
   border-color: #267c8d;
   box-shadow: 0 0 0 4px rgba(38, 124, 141, 0.16);
+}
+
+.search-form select {
+  flex: 0 0 148px;
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid #d7e0e3;
+  padding: 0 14px;
+  color: #1f2933;
+  background: #ffffff;
+  outline: 0;
+  cursor: pointer;
 }
 
 .search-form input {
@@ -194,15 +207,26 @@ input {
   }
 
   .search-form {
-    min-height: 52px;
+    display: grid;
+    min-height: 0;
+  }
+
+  .search-form select {
+    width: 100%;
+    min-height: 48px;
+    border-right: 0;
+    border-bottom: 1px solid #d7e0e3;
   }
 
   .search-form input {
+    min-height: 52px;
     padding: 0 14px;
   }
 
   .search-form button {
-    min-width: 72px;
+    min-height: 48px;
+    border-left: 0;
+    border-top: 1px solid #d7e0e3;
     padding: 0 14px;
   }
 

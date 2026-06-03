@@ -206,13 +206,19 @@ function normalizeSample(row) {
 }
 
 const SEARCH_FIELDS = [
-  { key: "code", weight: 1.2 },
-  { key: "sampleName", weight: 1.25 },
-  { key: "material", weight: 1 },
-  { key: "weave", weight: 1 },
-  { key: "color", weight: 0.95 },
-  { key: "functionality", weight: 1 },
-  { key: "usage", weight: 0.9 },
+  { key: "code", label: "품번", weight: 1.2 },
+  { key: "sampleName", label: "원단명", weight: 1.25 },
+  { key: "material", label: "소재", weight: 1 },
+  { key: "blendRatio", label: "혼용률", weight: 0.95 },
+  { key: "weave", label: "조직", weight: 1 },
+  { key: "weight", label: "중량", weight: 0.85 },
+  { key: "density", label: "밀도", weight: 0.85 },
+  { key: "yarn", label: "원사", weight: 0.9 },
+  { key: "color", label: "컬러", weight: 0.95 },
+  { key: "finish", label: "가공", weight: 0.9 },
+  { key: "functionality", label: "기능성", weight: 1 },
+  { key: "usage", label: "용도", weight: 0.9 },
+  { key: "location", label: "보관 위치", weight: 0.8 },
 ];
 
 function createBigrams(value) {
@@ -306,14 +312,22 @@ function scoreField(value, searchTerm) {
   return Math.max(diceSimilarity(fieldText, searchTerm), levenshteinSimilarity(fieldText, searchTerm));
 }
 
-function rankSample(sample, searchTerm) {
-  return SEARCH_FIELDS.reduce((bestScore, field) => {
+function getSearchFields(fieldKey = "all") {
+  if (fieldKey === "all") {
+    return SEARCH_FIELDS;
+  }
+
+  return SEARCH_FIELDS.filter((field) => field.key === fieldKey);
+}
+
+function rankSample(sample, searchTerm, fieldKey = "all") {
+  return getSearchFields(fieldKey).reduce((bestScore, field) => {
     const fieldScore = scoreField(sample[field.key], searchTerm) * field.weight;
     return Math.max(bestScore, fieldScore);
   }, 0);
 }
 
-function searchSamples(sampleList, query) {
+function searchSamples(sampleList, query, fieldKey = "all") {
   const searchTerm = compactText(query);
 
   if (!searchTerm) {
@@ -323,7 +337,7 @@ function searchSamples(sampleList, query) {
   const minimumScore = searchTerm.length <= 2 ? 0.62 : 0.42;
 
   return sampleList
-    .map((sample, index) => ({ index, sample, score: rankSample(sample, searchTerm) }))
+    .map((sample, index) => ({ index, sample, score: rankSample(sample, searchTerm, fieldKey) }))
     .filter((result) => result.score >= minimumScore)
     .sort((left, right) => right.score - left.score || left.index - right.index)
     .map((result) => result.sample);
@@ -381,18 +395,21 @@ function renderResults(results, query = "") {
 function bindSearch() {
   const searchForm = document.querySelector("#sample-search-form");
   const searchInput = document.querySelector("#sample-search");
+  const fieldSelect = document.querySelector("#sample-field");
+
+  const renderFilteredResults = () => {
+    const query = searchInput.value.trim();
+    const fieldKey = fieldSelect?.value || "all";
+    renderResults(searchSamples(samples, query, fieldKey), query);
+  };
 
   searchForm?.addEventListener("submit", (event) => {
     event.preventDefault();
-
-    const query = searchInput.value.trim();
-    renderResults(searchSamples(samples, query), query);
+    renderFilteredResults();
   });
 
-  searchInput?.addEventListener("input", (event) => {
-    const query = event.target.value.trim();
-    renderResults(searchSamples(samples, query), query);
-  });
+  searchInput?.addEventListener("input", renderFilteredResults);
+  fieldSelect?.addEventListener("change", renderFilteredResults);
 }
 
 function bindExcelUpload() {
@@ -437,6 +454,7 @@ if (typeof document !== "undefined") {
 if (typeof module !== "undefined") {
   module.exports = {
     DEFAULT_SAMPLES,
+    SEARCH_FIELDS,
     normalizeSample,
     searchSamples,
   };

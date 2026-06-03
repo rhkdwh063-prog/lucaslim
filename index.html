@@ -16,14 +16,31 @@
       </div>
 
       <form class="search-form" id="sample-search-form" role="search">
-        <label class="visually-hidden" for="sample-search">원단 샘플명 검색</label>
+        <label class="visually-hidden" for="sample-field">검색 키워드 선택</label>
+        <select id="sample-field" name="field" aria-label="검색 키워드 선택">
+          <option value="all">전체 키워드</option>
+          <option value="code">품번</option>
+          <option value="sampleName">원단명</option>
+          <option value="material">소재</option>
+          <option value="blendRatio">혼용률</option>
+          <option value="weave">조직</option>
+          <option value="weight">중량</option>
+          <option value="density">밀도</option>
+          <option value="yarn">원사</option>
+          <option value="color">컬러</option>
+          <option value="finish">가공</option>
+          <option value="functionality">기능성</option>
+          <option value="usage">용도</option>
+          <option value="location">보관 위치</option>
+        </select>
+        <label class="visually-hidden" for="sample-search">원단 샘플 검색</label>
         <input
           id="sample-search"
           name="q"
           type="search"
           autocomplete="off"
-          placeholder="원단 샘플명을 검색하세요"
-          aria-label="원단 샘플명 검색"
+          placeholder="검색어를 입력하세요"
+          aria-label="원단 샘플 검색어"
         >
         <button type="submit" aria-label="검색">검색</button>
       </form>
