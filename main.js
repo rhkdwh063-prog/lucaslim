@@ -215,6 +215,7 @@ const FIELD_KEYS = Object.keys(FIELD_ALIASES);
 
 let samples = [...DEFAULT_SAMPLES];
 let currentResults = [...samples];
+let serverAvailable = false;
 
 function compactText(value) {
   return String(value ?? "")
@@ -407,6 +408,48 @@ function searchSamples(sampleList, query, fieldKey = "all") {
     .map((result) => result.sample);
 }
 
+async function loadSamplesFromServer() {
+  const response = await fetch("/api/samples");
+
+  if (!response.ok) {
+    throw new Error("Failed to load samples");
+  }
+
+  const payload = await response.json();
+  return Array.isArray(payload.samples) ? payload.samples : [];
+}
+
+async function saveSamplesToServer(uploadedSamples) {
+  const response = await fetch("/api/samples", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ samples: uploadedSamples }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to save samples");
+  }
+
+  const payload = await response.json();
+  return Array.isArray(payload.samples) ? payload.samples : uploadedSamples;
+}
+
+async function initializeSamples() {
+  const status = document.querySelector("#data-status");
+
+  try {
+    samples = await loadSamplesFromServer();
+    serverAvailable = true;
+    status.textContent = `서버 DB에서 ${samples.length}개 원단 데이터를 불러왔습니다.`;
+  } catch {
+    samples = [...DEFAULT_SAMPLES];
+    serverAvailable = false;
+    status.textContent = "서버 DB에 연결하지 못해 테스트 원단을 표시합니다.";
+  }
+
+  renderResults(samples);
+}
+
 function valueOrDash(value) {
   return value === undefined || value === null || value === "" ? "-" : value;
 }
@@ -571,9 +614,18 @@ function bindExcelUpload() {
       return;
     }
 
-    samples = uploadedSamples;
-    status.textContent = `${sheetName} 시트에서 ${uploadedSamples.length}개 원단 데이터를 불러왔습니다.`;
-    renderResults(samples);
+    if (!serverAvailable) {
+      status.textContent = "서버 DB에 연결되지 않아 업로드 데이터를 저장할 수 없습니다.";
+      return;
+    }
+
+    try {
+      samples = await saveSamplesToServer(uploadedSamples);
+      status.textContent = `${sheetName} 시트의 ${uploadedSamples.length}개 행을 서버 DB에 저장했습니다.`;
+      renderResults(samples);
+    } catch {
+      status.textContent = "업로드 데이터 저장 중 오류가 발생했습니다.";
+    }
   });
 }
 
@@ -581,7 +633,7 @@ if (typeof document !== "undefined") {
   bindSearch();
   bindExcelUpload();
   bindPrintLabels();
-  renderResults(samples);
+  initializeSamples();
 }
 
 if (typeof module !== "undefined") {
@@ -591,8 +643,11 @@ if (typeof module !== "undefined") {
     SEARCH_FIELDS,
     normalizeSample,
     getSelectedLabelSamples,
+    initializeSamples,
+    loadSamplesFromServer,
     normalizeUploadedRows,
     renderPrintLabels,
+    saveSamplesToServer,
     searchSamples,
   };
 }
