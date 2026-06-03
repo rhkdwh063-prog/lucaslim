@@ -152,20 +152,66 @@ const DEFAULT_SAMPLES = [
 ];
 
 const FIELD_ALIASES = {
-  sampleName: ["sample_name", "samplename", "name", "원단명", "샘플명", "원단샘플명", "품명"],
-  code: ["code", "sample_code", "품번", "코드", "샘플코드"],
-  color: ["color", "컬러", "색상"],
-  material: ["material", "소재"],
-  blendRatio: ["blend_ratio", "blendratio", "혼용률", "혼용율"],
-  weave: ["weave", "structure", "조직"],
-  density: ["density", "밀도"],
-  yarn: ["yarn", "원사"],
-  weight: ["weight", "중량", "두께"],
-  finish: ["finish", "가공"],
-  functionality: ["functionality", "function", "기능성", "기능"],
-  usage: ["usage", "use", "용도"],
-  location: ["location", "위치", "보관위치", "보관 위치", "랙위치"],
+  sampleName: [
+    "sample_name",
+    "samplename",
+    "name",
+    "fabric_name",
+    "fabricname",
+    "fabric",
+    "item_name",
+    "itemname",
+    "원단명",
+    "원단 명",
+    "원단",
+    "샘플명",
+    "원단샘플명",
+    "품명",
+    "상품명",
+    "아이템명",
+  ],
+  code: [
+    "code",
+    "sample_code",
+    "samplecode",
+    "sample_no",
+    "sampleno",
+    "style_no",
+    "styleno",
+    "item_code",
+    "itemcode",
+    "품번",
+    "코드",
+    "샘플코드",
+    "샘플번호",
+    "원단코드",
+    "품목코드",
+  ],
+  material: ["material", "fiber", "fabrication", "소재", "원료"],
+  blendRatio: [
+    "blend_ratio",
+    "blendratio",
+    "composition",
+    "fiber_content",
+    "fibercontent",
+    "혼용률",
+    "혼용율",
+    "혼용",
+    "혼용률%",
+    "혼용율%",
+  ],
+  weave: ["weave", "structure", "construction", "조직", "조직명", "원단조직"],
+  weight: ["weight", "weightgsm", "gsm", "중량", "중량gsm", "두께"],
+  density: ["density", "gauge", "densitygauge", "밀도", "게이지", "밀도게이지"],
+  yarn: ["yarn", "yarn_count", "yarncount", "원사", "원사명", "번수"],
+  color: ["color", "colour", "컬러", "색상", "칼라"],
+  finish: ["finish", "finishing", "process", "가공", "후가공", "가공명"],
+  functionality: ["functionality", "function", "feature", "performance", "기능성", "기능", "특징"],
+  usage: ["usage", "use", "application", "purpose", "용도", "사용처", "적용아이템"],
+  location: ["location", "storage", "rack", "position", "위치", "보관위치", "보관 위치", "랙위치", "보관장소"],
 };
+
+const FIELD_KEYS = Object.keys(FIELD_ALIASES);
 
 let samples = [...DEFAULT_SAMPLES];
 
@@ -173,7 +219,7 @@ function compactText(value) {
   return String(value ?? "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "");
+    .replace(/[^0-9a-z가-힣ㄱ-ㅎㅏ-ㅣ]/g, "");
 }
 
 function getFieldValue(row, field) {
@@ -188,21 +234,38 @@ function getFieldValue(row, field) {
 }
 
 function normalizeSample(row) {
-  return {
-    sampleName: getFieldValue(row, "sampleName"),
-    code: getFieldValue(row, "code"),
-    material: getFieldValue(row, "material"),
-    blendRatio: getFieldValue(row, "blendRatio"),
-    weave: getFieldValue(row, "weave"),
-    weight: getFieldValue(row, "weight"),
-    density: getFieldValue(row, "density"),
-    yarn: getFieldValue(row, "yarn"),
-    color: getFieldValue(row, "color"),
-    finish: getFieldValue(row, "finish"),
-    functionality: getFieldValue(row, "functionality"),
-    usage: getFieldValue(row, "usage"),
-    location: getFieldValue(row, "location"),
-  };
+  return FIELD_KEYS.reduce((sample, field) => {
+    sample[field] = getFieldValue(row, field);
+    return sample;
+  }, {});
+}
+
+function hasRecognizedSampleData(sample) {
+  return FIELD_KEYS.some((field) => valueOrDash(sample[field]) !== "-");
+}
+
+function normalizeUploadedRows(rows) {
+  return rows.map(normalizeSample).filter(hasRecognizedSampleData);
+}
+
+function isExampleSheet(sheetName) {
+  return /예시|example/i.test(sheetName);
+}
+
+function getWorksheetRows(workbook) {
+  const dataSheetNames = workbook.SheetNames.filter((sheetName) => !isExampleSheet(sheetName));
+
+  for (const sheetName of dataSheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+    const normalizedRows = normalizeUploadedRows(rows);
+
+    if (normalizedRows.length > 0) {
+      return { rows: normalizedRows, sheetName };
+    }
+  }
+
+  return { rows: [], sheetName: "" };
 }
 
 const SEARCH_FIELDS = [
@@ -377,7 +440,7 @@ function renderResults(results, query = "") {
     .map(
       (sample) => `
         <article class="result-card">
-          <h2>${escapeHtml(sample.sampleName)}</h2>
+          <h2>${escapeHtml(sample.sampleName || sample.code || "원단 샘플")}</h2>
           <dl class="result-grid">
             <div><dt>품번</dt><dd>${escapeHtml(sample.code)}</dd></div>
             <div><dt>소재</dt><dd>${escapeHtml(sample.material)}</dd></div>
@@ -430,17 +493,15 @@ function bindExcelUpload() {
 
     const buffer = await file.arrayBuffer();
     const workbook = window.XLSX.read(buffer);
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = window.XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-    const uploadedSamples = rows.map(normalizeSample).filter((sample) => sample.sampleName);
+    const { rows: uploadedSamples, sheetName } = getWorksheetRows(workbook);
 
     if (uploadedSamples.length === 0) {
-      status.textContent = "인식 가능한 원단명이 없습니다.";
+      status.textContent = "인식 가능한 원단 데이터가 없습니다.";
       return;
     }
 
     samples = uploadedSamples;
-    status.textContent = `${uploadedSamples.length}개 원단 데이터를 불러왔습니다.`;
+    status.textContent = `${sheetName} 시트에서 ${uploadedSamples.length}개 원단 데이터를 불러왔습니다.`;
     renderResults(samples);
   });
 }
@@ -454,8 +515,10 @@ if (typeof document !== "undefined") {
 if (typeof module !== "undefined") {
   module.exports = {
     DEFAULT_SAMPLES,
+    FIELD_KEYS,
     SEARCH_FIELDS,
     normalizeSample,
+    normalizeUploadedRows,
     searchSamples,
   };
 }
